@@ -1,12 +1,41 @@
-package org.bbc.arithmeticparser
-
-object parser extends App {
+object parser {
 	// constructor
-	var expr = ""
+	var iteration = 0
+	var operators = List("*","/","+","-")
 
-	def apply() { expr = _; eval() }
+	def apply(str: String) { eval(str) }
 
-	def eval() { print(expr) }
+	def eval(str: String): String = {
+		iteration = iteration + 1
+		println(iteration, str)
+		str match {
+			// match in order of operation priority
+			case str if (str.contains("(") || str.contains(")")) => {
+				val op_br = str.indexOf("(")
+				val cl_br = str.lastIndexOf(")")
+				eval(str.replace(op_br, cl_br, eval(str.substring(op_br, cl_br))))
+			}
+			// should only get here if no brackets are left inside current substring
+			case str if str.contains("*") => {
+				var left = str.split("\\*")(0)
+				var right = str.split("\\*")(1)
+				if (operators.exists(left.contains(_))) { left = eval(left)}
+				if (operators.exists(right.contains(_))) { right = eval(right)}
+				val tmp = left.toFloat * right.toFloat
+				eval(tmp.toString)
+			}
+			case str if str.contains("/") => { ""}
+			// should only get here if no priority operations * or / are left inside current substring
+			case str if str.contains("+") => { ""}
+			case str if str.contains("-") => { ""}
+		}
+	}
 }
 
-p = new parser("Hello World!")
+object Main extends App {
+	println(parser("5*(3*2)"))
+	//println(parser("1+1"))
+	//println(res = parser("1-1"))
+	//println(res = parser("1*1"))
+	//println(res = parser("1/1"))
+}
