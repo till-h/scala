@@ -11,9 +11,7 @@ object parser {
 		str match {
 			// match in order of operation priority
 			case str if (str.contains("(") || str.contains(")")) => {
-				val op_br = str.indexOf("(")
-				val cl_br = str.lastIndexOf(")")
-				eval(str.replace(op_br, cl_br, eval(str.substring(op_br, cl_br))))
+				// use regex to mathch all atomic (...) occurences and replace these by eval((...)) in each case.
 			}
 			// should only get here if no brackets are left inside current substring
 			case str if str.contains("*") => {
