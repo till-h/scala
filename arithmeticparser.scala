@@ -1,7 +1,8 @@
 object parser {
 	// constructor
 	var iteration = 0
-	var operators = List("*","/","+","-")
+	val operators = List("*","/","+","-")
+	val re_atomic_bracket = "\\(([^\\)^\\(]+)\\)".r
 
 	def apply(str: String) { eval(str) }
 
@@ -11,7 +12,11 @@ object parser {
 		str match {
 			// match in order of operation priority
 			case str if (str.contains("(") || str.contains(")")) => {
-				// use regex to mathch all atomic (...) occurences and replace these by eval((...)) in each case.
+				val matches = re_atomic_bracket.findAllIn(str).toArray
+				matches.mkString
+				//println(matches.mkString)
+				//matches.foreach(println(toString))
+				// use regex to match all atomic (...) occurences and replace these by eval((...)) in each case.
 			}
 			// should only get here if no brackets are left inside current substring
 			case str if str.contains("*") => {
