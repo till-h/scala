@@ -4,7 +4,6 @@ object parser {
 	val operators = List("*","/","+","-")
 	val re_innermost_bracket = """(\(([^\)^\(]+)\))""".r
 
-	//def apply(str: String) { eval(str) }
 	def apply(str: String) { eval(str) }
 
 	def eval(str: String): String = {
@@ -14,7 +13,8 @@ object parser {
 			// match in order of operation priority
 			case str if (str.contains("(") || str.contains(")")) => {
 				// use regex to match all atomic (...) occurences and replace these by eval((...)) in each case.
-				re_innermost_bracket.replaceAllIn(str, bracket => eval(bracket.toString.replaceAll("[()]", "")))
+				val res = re_innermost_bracket.replaceAllIn(str, bracket => eval(bracket.toString.replaceAll("[()]", "")))
+				eval(res)
 			}
 			// should only get here if no brackets are left inside current substring
 			case str if str.contains("*") => {
@@ -22,20 +22,21 @@ object parser {
 				var right = str.split("\\*")(1)
 				if (operators.exists(left.contains(_))) { left = eval(left)}
 				if (operators.exists(right.contains(_))) { right = eval(right)}
-				val tmp = left.toFloat * right.toFloat
-				eval(tmp.toString)
+				val res = left.toFloat * right.toFloat
+				eval(res.toString)
 			}
-			case str if str.contains("/") => { ""}
+			case str if str.contains("/") => { str }
 			// should only get here if no priority operations * or / are left inside current substring
-			case str if str.contains("+") => { ""}
-			case str if str.contains("-") => { ""}
+			case str if str.contains("+") => { str }
+			case str if str.contains("-") => { str }
+			case str_no_operators_left => { str_no_operators_left }
 		}
 	}
 }
 
 object Main extends App {
-	println(parser("5*(3*2)+7*(5-9)-((7/6)*2)"))
-	//println(parser("1+1"))
+	//println(parser("5*(3*2)+7*(9-5)-((7/6)*2)"))
+	println(parser("5*(3*2)"))
 	//println(res = parser("1-1"))
 	//println(res = parser("1*1"))
 	//println(res = parser("1/1"))
