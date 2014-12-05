@@ -3,6 +3,10 @@ object parser {
 	private var iteration = 0
 	private val operators = List("*","/","+","-")
 	private val re_innermost_bracket = """(\([^\)\(]+\))""".r
+	private val re_multiplication = """([0-9\\.]+)\\*([0-9\\.]+)""".r
+	private val re_division = """""".r
+	private val re_addition = """""".r
+	private val re_subtraction = """""".r
 
 	private def split_and_eval(str: String, re: String) = {
 		var left = str.split(re, 2)(0)
@@ -24,26 +28,25 @@ object parser {
 			}
 			// should only get here if no brackets are left inside current substring
 			case str if str.contains("*") => {
-				val (left, right) = split_and_eval(str, "\\*")
-				val res = left.toFloat * right.toFloat
-				res.toString
+				val res = re_multiplication.replaceFirstIn(str, multiplication => (multiplication.toString.split("\\*", 2)(0).toFloat * multiplication.toString.split("\\*", 2)(0).toFloat).toString)
+				eval(res)
 			}
 			case str if str.contains("/") => {
 				val (left, right) = split_and_eval(str, "/")
 				val res = left.toFloat / right.toFloat
-				res.toString
+				eval(res.toString)
 			}
 			// should only get here if no priority operations * or / are left inside current substring
 			case str if str.contains("+") => {
 				val (left, right) = split_and_eval(str, "\\+")
 				val res = left.toFloat + right.toFloat
-				res.toString
+				eval(res.toString)
 			}
 
 			case str if str.contains("-") => {
 				val (left, right) = split_and_eval(str, "-")
 				val res = left.toFloat - right.toFloat
-				res.toString
+				eval(res.toString)
 			}
 			case str_no_operators_left => { str_no_operators_left }
 		}
