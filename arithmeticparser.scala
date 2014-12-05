@@ -2,23 +2,19 @@ object parser {
 	// constructor
 	var iteration = 0
 	val operators = List("*","/","+","-")
-	val re_atomic_bracket = "\\(([^\\)^\\(]+)\\)".r
+	val re_innermost_bracket = """(\(([^\)^\(]+)\))""".r
 
 	//def apply(str: String) { eval(str) }
 	def apply(str: String) { eval(str) }
 
 	def eval(str: String): String = {
 		iteration = iteration + 1
-		println(iteration, str)
+		println(iteration.toString ++ "\t" ++ str)
 		str match {
 			// match in order of operation priority
 			case str if (str.contains("(") || str.contains(")")) => {
-				val matches = re_atomic_bracket.findAllIn(str).toArray
-				println("Bracket expressions: " ++ matches.mkString)
-				
-				matches.mkString
-				//matches.foreach(eval)
 				// use regex to match all atomic (...) occurences and replace these by eval((...)) in each case.
+				re_innermost_bracket.replaceAllIn(str, bracket => eval(bracket.toString.replaceAll("[()]", "")))
 			}
 			// should only get here if no brackets are left inside current substring
 			case str if str.contains("*") => {
@@ -38,7 +34,7 @@ object parser {
 }
 
 object Main extends App {
-	println(parser("5*(3*2)"))
+	println(parser("5*(3*2)+7*(5-9)-((7/6)*2)"))
 	//println(parser("1+1"))
 	//println(res = parser("1-1"))
 	//println(res = parser("1*1"))
