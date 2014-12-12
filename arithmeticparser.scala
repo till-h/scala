@@ -3,7 +3,7 @@ object parser {
 	private var iteration = 0
 	private val operators = List("*","/","+","-")
 	private val re_innermost_bracket = """(\([^\)\(]+\))""".r
-	private val re_multiplication = """([0-9\\.]+)\\*([0-9\\.]+)""".r
+	private val re_multiplication = """([0-9\.]+)\*([0-9\.]+)""".r
 	private val re_division = """""".r
 	private val re_addition = """""".r
 	private val re_subtraction = """""".r
@@ -28,7 +28,14 @@ object parser {
 			}
 			// should only get here if no brackets are left inside current substring
 			case str if str.contains("*") => {
-				val res = re_multiplication.replaceFirstIn(str, multiplication => (multiplication.toString.split("\\*", 2)(0).toFloat * multiplication.toString.split("\\*", 2)(0).toFloat).toString)
+				var res = str
+				for ( multi <- re_multiplication.findAllMatchIn(str) ) {
+					val left = multi.toString.split("""\*""", 2)(0).toFloat
+					val right = multi.toString.split("""\*""", 2)(1).toFloat
+					val multi_res = (left * right).toString
+					println("Multiplication: ", multi.toString, left, right, multi_res)
+					res = res.replace(multi.toString, multi_res)
+				}
 				eval(res)
 			}
 			case str if str.contains("/") => {
@@ -59,7 +66,8 @@ object Main extends App {
 	//println(parser("5*(3*2)"))
 	//println(parser("2*(3*4)*(5*(6*7))"))
 	//println(parser("2*(3*4)*(5*(6*7))*(2*6*7*1*(6*7*(8*(9)*4*2)*1)*1)*7"))
-	println(parser("1+2*3"))
+	println(parser("1+2*3+4*5"))
+	println(parser("1*2*3*4*5*6"))
 	//println(parser("1+10*2/2"))
 	//println(parser(""))
 	//println(parser(""))
