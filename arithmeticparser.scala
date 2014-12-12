@@ -3,6 +3,7 @@ object parser {
 	private var iteration = 0
 	private val operators = List("*","/","+","-")
 	private val re_innermost_bracket = """(\([^\)\(]+\))""".r
+	private val float = """((?<![0-9])-|^-)?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?""" // ?<! is a negative lookbehind
 	private val re_multiplication = """([0-9\.]+)\*([0-9\.]+)""".r
 	private val re_division = """([0-9\.]+)/([0-9\.]+)""".r
 	private val re_addition = """([0-9\.]+)\+([0-9\.]+)""".r
@@ -29,7 +30,7 @@ object parser {
 					val left = multi.toString.split("""\*""", 2)(0).toFloat
 					val right = multi.toString.split("""\*""", 2)(1).toFloat
 					val multi_res = (left * right).toString
-					println("Multiplication: ", multi.toString, left, right, multi_res)
+					println("Multiplication ", multi.toString, left, right, multi_res)
 					res = res.replace(multi.toString, multi_res)
 				}
 				eval(res)
@@ -40,7 +41,7 @@ object parser {
 					val left = divi.toString.split("""/""", 2)(0).toFloat
 					val right = divi.toString.split("""/""", 2)(1).toFloat
 					val divi_res = (left / right).toString
-					println("Division: ", divi.toString, left, right, divi_res)
+					println("Division ", divi.toString, left, right, divi_res)
 					res = res.replace(divi.toString, divi_res)
 				}
 				eval(res)
@@ -53,7 +54,7 @@ object parser {
 					val left = add.toString.split("""\+""", 2)(0).toFloat
 					val right = add.toString.split("""\+""", 2)(1).toFloat
 					val add_res = (left + right).toString
-					println("Addition: ", add.toString, left, right, add_res)
+					println("Addition ", add.toString, left, right, add_res)
 					res = res.replace(add.toString, add_res)
 				}
 				eval(res)
@@ -64,8 +65,8 @@ object parser {
 				for ( sub <- re_subtraction.findAllMatchIn(str) ) {
 					val left = sub.toString.split("""-""", 2)(0).toFloat
 					val right = sub.toString.split("""-""", 2)(1).toFloat
-					val sub_res = (left / right).toString
-					println("Division: ", sub.toString, left, right, sub_res)
+					val sub_res = (left - right).toString
+					println("Division ", sub.toString, left, right, sub_res)
 					res = res.replace(sub.toString, sub_res)
 				}
 				eval(res)
@@ -79,15 +80,15 @@ object parser {
 }
 
 object Main extends App {
-	println(parser("5*(3*2)"))
-	println()
-	println()
 	//println(parser("2*(3*4)*(5*(6*7))"))
 	//println(parser("2*(3*4)*(5*(6*7))*(2*6*7*1*(6*7*(8*(9)*4*2)*1)*1)*7"))
 	println(parser("1+2*3+4*5"))
 	println()
 	println()
 	println(parser("1*2*3*4*5*6"))
+	println()
+	println()
+	println(parser("10*2+(10-8)*5"))
 	//println(parser("1+10*2/2"))
 	//println(parser(""))
 	//println(parser(""))

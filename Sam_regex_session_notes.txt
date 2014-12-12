@@ -106,3 +106,14 @@ re_multiplication: scala.util.matching.Regex = ([0-9\.]+)\*([0-9\.]+)
 scala> for ( multiplication <- re_multiplication.findAllMatchIn("1*2*3*4") ) { println(multiplication.toString, multiplication.start, multiplication.end)}
 (1*2,0,3)
 (3*4,4,7)
+
+---------------------------------------------------------------------------------------
+
+scala> val f = """((?<![0-9])-|^-)?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?""".r
+f: scala.util.matching.Regex = ((?<![0-9])-|^-)?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?
+
+scala> for ( m <- f.findAllIn("-4.6-9.8+4.5*-9") ) { println(m.toString)}
+-4.6
+9.8
+4.5
+-9
