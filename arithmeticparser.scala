@@ -1,13 +1,16 @@
-object parser {
+package arithmeticparser
+
+class parser {
 	// constructor
 	private var iteration = 0
-	private val operators = List("*","/","+","-")
+	private val operators            = List("*","/","+","-")
+	// TODO these need lots of unit tests
 	private val re_innermost_bracket = """(\([^\)\(]+\))""".r
-	private val float = """((?<![0-9])-|^-)?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?""" // ?<! is a negative lookbehind
-	private val re_multiplication = """([0-9\.]+)\*([0-9\.]+)""".r
-	private val re_division = """([0-9\.]+)/([0-9\.]+)""".r
-	private val re_addition = """([0-9\.]+)\+([0-9\.]+)""".r
-	private val re_subtraction = """([0-9\.]+)-([0-9\.]+)""".r
+	private val float                = """((?<![0-9])-|^-)?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?""" // ?<! is a negative lookbehind
+	private val re_multiplication    = (float + """\*""" + float).r
+	private val re_division          = (float + """/"""  + float).r
+	private val re_addition          = (float + """\+""" + float).r
+	private val re_subtraction       = (float + """-"""  + float).r
 
 	private def eval(str: String): String = {
 		
@@ -82,6 +85,7 @@ object parser {
 object Main extends App {
 	//println(parser("2*(3*4)*(5*(6*7))"))
 	//println(parser("2*(3*4)*(5*(6*7))*(2*6*7*1*(6*7*(8*(9)*4*2)*1)*1)*7"))
+	val parser = new parser
 	println(parser("1+2*3+4*5"))
 	println()
 	println()
