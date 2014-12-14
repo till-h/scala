@@ -8,9 +8,9 @@ abstract class UnitSpec extends FlatSpec with ShouldMatchers
 class parserSpec extends UnitSpec {
 	val test_set = Table(
 	("formula", "result"),
-	("1+2","3"),
-	("1-2","-1"),
-	("1*2","2"),
+	("1+2","3.0"),
+	("1-2","-1.0"),
+	("1*2","2.0"),
 	("1/2","0.5")
 	)
 
