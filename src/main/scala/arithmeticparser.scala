@@ -6,7 +6,7 @@ class parser {
 	private val operators            = List("*","/","+","-")
 	// TODO these need lots of unit tests
 	private val re_innermost_bracket = """(\([^\)\(]+\))""".r
-	private val float                = """((?<![0-9])-|^-)?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?""" // ?<! is a negative lookbehind
+	private val float                = """((?<![0-9])-|^-)?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?""" /** ?<! is a negative lookbehind */
 	private val re_multiplication    = (float + """\*""" + float).r
 	private val re_division          = (float + """/"""  + float).r
 	private val re_addition          = (float + """\+""" + float).r
@@ -27,7 +27,7 @@ class parser {
 			}
 			
 			// should only get here if no brackets are left inside current substring
-			case str if str.contains("*") => {
+			case str if str matches re_multiplication.toString => {
 				var res = str
 				for ( multi <- re_multiplication.findAllMatchIn(str) ) {
 					val left = multi.toString.split("""\*""", 2)(0).toFloat
@@ -38,7 +38,7 @@ class parser {
 				}
 				eval(res)
 			}
-			case str if str.contains("/") => {
+			case str if str matches re_division.toString => {
 				var res = str
 				for ( divi <- re_division.findAllMatchIn(str) ) {
 					val left = divi.toString.split("""/""", 2)(0).toFloat
@@ -51,7 +51,7 @@ class parser {
 			}
 			
 			// should only get here if no priority operations * or / are left inside current substring
-			case str if str.contains("+") => {
+			case str if str matches re_addition.toString => {
 				var res = str
 				for ( add <- re_addition.findAllMatchIn(str) ) {
 					val left = add.toString.split("""\+""", 2)(0).toFloat
@@ -63,7 +63,7 @@ class parser {
 				eval(res)
 			}
 
-			case str if str.contains("-") => {
+			case str if str matches re_subtraction.toString => {
 				var res = str
 				for ( sub <- re_subtraction.findAllMatchIn(str) ) {
 					val left = sub.toString.split("""-""", 2)(0).toFloat
