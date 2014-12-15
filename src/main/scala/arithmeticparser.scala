@@ -1,5 +1,7 @@
 package arithmeticparser
 
+import org.tillh.utils.StringUtils._
+
 class parser {
 	// constructor
 	private var iteration = 0
@@ -27,49 +29,58 @@ class parser {
 			}
 			
 			// should only get here if no brackets are left inside current substring
-			case str if str matches re_multiplication.toString => {
+			case str if str matchesRegex re_multiplication => {
 				var res = str
+				// Use findAllIn for multiplication, because multiplication is associative.
+				// findAllIn finds non-overlapping matches.
+				// This is important to avoid clashes between neighbouring operations of the same type.
+				// For instance, "1*2*3" only contains _one_ non-overlapping multiplication, implemented
+				// as the first match "1*2".
 				for ( multi <- re_multiplication.findAllMatchIn(str) ) {
 					val left = multi.toString.split("""\*""", 2)(0).toFloat
 					val right = multi.toString.split("""\*""", 2)(1).toFloat
 					val multi_res = (left * right).toString
-					println("Multiplication ", multi.toString, left, right, multi_res)
+					println("\t=" + multi_res)
 					res = res.replace(multi.toString, multi_res)
 				}
 				eval(res)
 			}
-			case str if str matches re_division.toString => {
+			// Use findFirstIn for division, because division is non-associative.
+			// 1/2/3/4 = 1/24 != (1/2)/(3/4) = 1/2 * 4/3 = 2/3
+			case str if str matchesRegex re_division => {
 				var res = str
 				for ( divi <- re_division.findAllMatchIn(str) ) {
 					val left = divi.toString.split("""/""", 2)(0).toFloat
 					val right = divi.toString.split("""/""", 2)(1).toFloat
 					val divi_res = (left / right).toString
-					println("Division ", divi.toString, left, right, divi_res)
+					println("\t=" + divi_res)
 					res = res.replace(divi.toString, divi_res)
 				}
 				eval(res)
 			}
 			
 			// should only get here if no priority operations * or / are left inside current substring
-			case str if str matches re_addition.toString => {
+			// Use findAllIn for addition, because addition is associative.
+			case str if str matchesRegex re_addition => {
 				var res = str
 				for ( add <- re_addition.findAllMatchIn(str) ) {
 					val left = add.toString.split("""\+""", 2)(0).toFloat
 					val right = add.toString.split("""\+""", 2)(1).toFloat
 					val add_res = (left + right).toString
-					println("Addition ", add.toString, left, right, add_res)
+					println("\t=" + add_res)
 					res = res.replace(add.toString, add_res)
 				}
 				eval(res)
 			}
-
-			case str if str matches re_subtraction.toString => {
+			// Use findFirstIn for subtraction, because subtraction is non-associative.
+			// 1-2-3-4 = -8 != (1-2)-(3-4) = -1 - (-1) = 0
+			case str if str matchesRegex re_subtraction => {
 				var res = str
 				for ( sub <- re_subtraction.findAllMatchIn(str) ) {
 					val left = sub.toString.split("""-""", 2)(0).toFloat
 					val right = sub.toString.split("""-""", 2)(1).toFloat
 					val sub_res = (left - right).toString
-					println("Division ", sub.toString, left, right, sub_res)
+					println("\t=" + sub_res)
 					res = res.replace(sub.toString, sub_res)
 				}
 				eval(res)
@@ -87,7 +98,7 @@ object Main extends App {
 	//println(parser("2*(3*4)*(5*(6*7))*(2*6*7*1*(6*7*(8*(9)*4*2)*1)*1)*7"))
 	val parser = new parser
 	println(parser("1+2*3+4*5"))
-	println()
+	println(parser("1+2+3+4+5"))
 	println()
 	println(parser("1*2*3*4*5*6"))
 	println()
