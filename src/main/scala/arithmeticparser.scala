@@ -49,15 +49,16 @@ class parser {
 			// 1/2/3/4 = 1/24 != (1/2)/(3/4) = 1/2 * 4/3 = 2/3
 			case str if str matchesRegex re_division => {
 				var res = str
-				for ( divi <- re_division.findAllMatchIn(str) ) {
+				re_division.findFirstMatchIn(str).map { divi =>
 					val left = divi.toString.split("""/""", 2)(0).toFloat
 					val right = divi.toString.split("""/""", 2)(1).toFloat
 					val divi_res = (left / right).toString
 					println("\t=" + divi_res)
 					res = res.replace(divi.toString, divi_res)
+					eval(res)
 				}
-				eval(res)
-			}
+				res
+			}	
 			
 			// should only get here if no priority operations * or / are left inside current substring
 			// Use findAllIn for addition, because addition is associative.
@@ -76,13 +77,13 @@ class parser {
 			// 1-2-3-4 = -8 != (1-2)-(3-4) = -1 - (-1) = 0
 			case str if str matchesRegex re_subtraction => {
 				var res = str
-				for ( sub <- re_subtraction.findAllMatchIn(str) ) {
-					val left = sub.toString.split("""-""", 2)(0).toFloat
-					val right = sub.toString.split("""-""", 2)(1).toFloat
-					val sub_res = (left - right).toString
-					println("\t=" + sub_res)
-					res = res.replace(sub.toString, sub_res)
-				}
+				val sub = re_subtraction.findFirstMatchIn(str).get // guaranteed to work as case above checked
+				println("sub = " + sub)
+				val left = sub.toString.split("""-""", 2)(0).toFloat //TODO splitting doesn't work. -ve sign of first number is erroneously taken to be the operator
+				val right = sub.toString.split("""-""", 2)(1).toFloat
+				val sub_res = (left - right).toString
+				println("\t=" + sub_res)
+				res = res.replace(sub.toString, sub_res)
 				eval(res)
 			}
 			case str_no_operators_left => { str_no_operators_left }
@@ -97,9 +98,10 @@ object Main extends App {
 	//println(parser("2*(3*4)*(5*(6*7))"))
 	//println(parser("2*(3*4)*(5*(6*7))*(2*6*7*1*(6*7*(8*(9)*4*2)*1)*1)*7"))
 	val parser = new parser
+	println(parser("1-2-3-4-5-6"))
 	println(parser("1+2*3+4*5"))
 	println(parser("1+2+3+4+5"))
-	println()
+	println(parser("1000/10/20/5/4"))
 	println(parser("1*2*3*4*5*6"))
 	println()
 	println()
