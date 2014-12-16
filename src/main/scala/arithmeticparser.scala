@@ -29,13 +29,17 @@ class parser {
 			}
 			
 			// should only get here if no brackets are left inside current substring
+			// Following convention, "comb" through the expression from left to right,
+			// evaluating first the leftmost * OR / operation, then combing through
+			// the result until no * or / is left, THEN doing the same for + OR -.
+			// The important thing is to prioritise * and / equally, above the equally
+			// prioritised + and -.
+
+			// TODO equal prioritisation of (*,/) and (+,-):
+			// combine them into one regex to check for and extract the operator per match group
+			// perform operation depending on operator detected.
 			case str if str matchesRegex re_multiplication => {
 				var res = str
-				// Use findAllIn for multiplication, because multiplication is associative.
-				// findAllIn finds non-overlapping matches.
-				// This is important to avoid clashes between neighbouring operations of the same type.
-				// For instance, "1*2*3" only contains _one_ non-overlapping multiplication, implemented
-				// as the first match "1*2".
 				for ( multi <- re_multiplication.findAllMatchIn(str) ) {
 					val left = multi.toString.split("""\*""", 2)(0).toFloat
 					val right = multi.toString.split("""\*""", 2)(1).toFloat
@@ -45,23 +49,19 @@ class parser {
 				}
 				eval(res)
 			}
-			// Use findFirstIn for division, because division is non-associative.
-			// 1/2/3/4 = 1/24 != (1/2)/(3/4) = 1/2 * 4/3 = 2/3
+			
 			case str if str matchesRegex re_division => {
 				var res = str
-				re_division.findFirstMatchIn(str).map { divi =>
-					val left = divi.toString.split("""/""", 2)(0).toFloat
-					val right = divi.toString.split("""/""", 2)(1).toFloat
-					val divi_res = (left / right).toString
-					println("\t=" + divi_res)
-					res = res.replace(divi.toString, divi_res)
-					eval(res)
-				}
-				res
-			}	
+				val divi = re_division.findFirstIn(str).get
+				val floats = (float.r findAllIn str).toList
+				val left = floats(0).toFloat
+				val right = floats(1).toFloat
+				val divi_res = (left / right).toString
+				println("\t=" + divi_res)
+				res = res.replace(divi.toString, divi_res)
+				eval(res)
+			}		
 			
-			// should only get here if no priority operations * or / are left inside current substring
-			// Use findAllIn for addition, because addition is associative.
 			case str if str matchesRegex re_addition => {
 				var res = str
 				for ( add <- re_addition.findAllMatchIn(str) ) {
@@ -73,14 +73,13 @@ class parser {
 				}
 				eval(res)
 			}
-			// Use findFirstIn for subtraction, because subtraction is non-associative.
-			// 1-2-3-4 = -8 != (1-2)-(3-4) = -1 - (-1) = 0
+
 			case str if str matchesRegex re_subtraction => {
 				var res = str
-				val sub = re_subtraction.findFirstMatchIn(str).get // guaranteed to work as case above checked
-				println("sub = " + sub)
-				val left = sub.toString.split("""-""", 2)(0).toFloat //TODO splitting doesn't work. -ve sign of first number is erroneously taken to be the operator
-				val right = sub.toString.split("""-""", 2)(1).toFloat
+				val sub = re_subtraction.findFirstIn(str).get // guaranteed to work as case above checked
+				val floats = (float.r findAllIn str).toList
+				val left = floats(0).toFloat
+				val right = floats(1).toFloat
 				val sub_res = (left - right).toString
 				println("\t=" + sub_res)
 				res = res.replace(sub.toString, sub_res)
