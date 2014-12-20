@@ -1,6 +1,9 @@
 package arithmeticparser
 
+import math._
 import org.scalatest._
+import org.scalatest.Checkpoints._
+import Matchers._
 import org.scalatest.prop.TableDrivenPropertyChecks._
 
 abstract class UnitSpec extends FlatSpec with ShouldMatchers
@@ -31,7 +34,7 @@ class parserSpec extends UnitSpec {
 	("1+2*3","7.0"),
 	("1+2/3","1.6666666666666"),
 	("1-2*3","-5.0"),
-	("1-2/3","-0.6666666666666"),
+	("1-2/3","0.3333333333333"),
 	("1-2+3*4/5+6-7*8/9","1.17777777778"),
 	("1*2/3-4+5*6/7-8+9-10","-8.04761904762"),
 	// brackets!
@@ -40,24 +43,24 @@ class parserSpec extends UnitSpec {
 	("5/(6+7)","0.38461538461"),
 	("5/(6-7)","-5.0"),
 	("3*(6-(20/4))","3.0"),
-	("",""),
-	("",""),
-	("",""),
-	("","")
 	)
 
-	"The parser" should "get the maths right" in {
+	"The parser" should "correctly evaluate manually entered formulae" in {
 		val parse = new parser
+		val cp = new Checkpoint
 		forAll[String,String](test_set) { (formula: String, result: String) =>
 			println(formula + " = " + result)
-			parse(formula) should equal (result)
+			try {
+				cp { parse(formula).toDouble / result.toDouble should be (1.0 +- 0.001) }
+			} catch {
+				case e: Exception => println(e.getMessage)
+			}
 		}
+		cp.reportAll
 	}
-	// val parse = new parser
-	// for (test <- test_set) { (formula: String, result: String) =>
-	// 	val behave = "calculate " + formula + " = " + result
-	// 	"The parser" should behave in {
-	// 		parse(formula) should equal (result)
-	// 	}
-	// }
+
+	"The parser" should "agree with the results of the google search calculator" in {
+		val parse = new parser
+
+	}
 }

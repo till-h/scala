@@ -4,15 +4,12 @@ import org.tillh.utils.StringUtils._
 
 class parser {
 	// constructor
-	private var iteration = 0
+	private var iteration            = 0
 	private val operators            = List("*","/","+","-")
-	// TODO these need lots of unit tests
 	private val re_innermost_bracket = """(\([^\)\(]+\))""".r
-	private val float                = """((?<![0-9])-|^-)?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?""" /** ?<! is a negative lookbehind */
-	private val re_multiplication    = (float + """\*""" + float).r
-	private val re_division          = (float + """/"""  + float).r
-	private val re_addition          = (float + """\+""" + float).r
-	private val re_subtraction       = (float + """-"""  + float).r
+	private val float                = """(((?<![0-9])-|^-)?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?)""" /** ?<! is a negative lookbehind */
+	private val re_mul_div			 = (float + """(\*|/)""" + float).r
+	private val re_add_sub			 = (float + """(\+|-)""" + float).r
 
 	private def eval(str: String): String = {
 		
@@ -28,63 +25,42 @@ class parser {
 				eval(res)
 			}
 			
-			// should only get here if no brackets are left inside current substring
+			// Should only get here if no brackets are left inside current substring.
 			// Following convention, "comb" through the expression from left to right,
 			// evaluating first the leftmost * OR / operation, then combing through
 			// the result until no * or / is left, THEN doing the same for + OR -.
 			// The important thing is to prioritise * and / equally, above the equally
 			// prioritised + and -.
-
-			// TODO equal prioritisation of (*,/) and (+,-):
-			// combine them into one regex to check for and extract the operator per match group
-			// perform operation depending on operator detected.
-			case str if str matchesRegex re_multiplication => {
+			case str if str matchesRegex re_mul_div => {
 				var res = str
-				for ( multi <- re_multiplication.findAllMatchIn(str) ) {
-					val left = multi.toString.split("""\*""", 2)(0).toFloat
-					val right = multi.toString.split("""\*""", 2)(1).toFloat
-					val multi_res = (left * right).toString
-					println("\t=" + multi_res)
-					res = res.replace(multi.toString, multi_res)
+				val mul_div = re_mul_div.findFirstMatchIn(str).get
+				val left = mul_div.group(1).toFloat
+				val right = mul_div.group(5).toFloat
+				var mul_div_res = ""
+				mul_div.group(4) match {
+					case "*" => mul_div_res = (left * right).toString
+					case "/" => mul_div_res = (left / right).toString
 				}
-				eval(res)
-			}
-			
-			case str if str matchesRegex re_division => {
-				var res = str
-				val divi = re_division.findFirstIn(str).get
-				val floats = (float.r findAllIn str).toList
-				val left = floats(0).toFloat
-				val right = floats(1).toFloat
-				val divi_res = (left / right).toString
-				println("\t=" + divi_res)
-				res = res.replace(divi.toString, divi_res)
-				eval(res)
-			}		
-			
-			case str if str matchesRegex re_addition => {
-				var res = str
-				for ( add <- re_addition.findAllMatchIn(str) ) {
-					val left = add.toString.split("""\+""", 2)(0).toFloat
-					val right = add.toString.split("""\+""", 2)(1).toFloat
-					val add_res = (left + right).toString
-					println("\t=" + add_res)
-					res = res.replace(add.toString, add_res)
-				}
+				println("\t=" + mul_div_res)
+				res = res.replaceFirstOccurrence(mul_div.toString, mul_div_res)
 				eval(res)
 			}
 
-			case str if str matchesRegex re_subtraction => {
+			case str if str matchesRegex re_add_sub => {
 				var res = str
-				val sub = re_subtraction.findFirstIn(str).get // guaranteed to work as case above checked
-				val floats = (float.r findAllIn str).toList
-				val left = floats(0).toFloat
-				val right = floats(1).toFloat
-				val sub_res = (left - right).toString
-				println("\t=" + sub_res)
-				res = res.replace(sub.toString, sub_res)
+				val add_sub = re_add_sub.findFirstMatchIn(str).get
+				val left = add_sub.group(1).toFloat
+				val right = add_sub.group(5).toFloat
+				var add_sub_res = ""
+				add_sub.group(4) match {
+					case "+" => add_sub_res = (left + right).toString
+					case "-" => add_sub_res = (left - right).toString
+				}
+				println("\t=" + add_sub_res)
+				res = res.replaceFirstOccurrence(add_sub.toString, add_sub_res)
 				eval(res)
 			}
+
 			case str_no_operators_left => { str_no_operators_left }
 		
 		}
