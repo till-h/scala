@@ -2,19 +2,19 @@ package arithmeticparser
 
 import org.tillh.utils.StringUtils._
 
-class parser {
+class parser (verbose: Boolean = false){
 	// constructor
 	private var iteration            = 0
 	private val operators            = List("*","/","+","-")
-	private val re_innermost_bracket = """(\([^\)\(]+\))""".r
-	private val float                = """(((?<![0-9])-|^-)?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?)""" /** ?<! is a negative lookbehind */
-	private val re_mul_div			 = (float + """(\*|/)""" + float).r
-	private val re_add_sub			 = (float + """(\+|-)""" + float).r
+	private val re_innermost_bracket = ParserRegex.re_innermost_bracket
+	private val float                = ParserRegex.float
+	private val re_mul_div			 = ParserRegex.re_mul_div
+	private val re_add_sub			 = ParserRegex.re_add_sub
 
 	private def eval(str: String): String = {
 		
 		iteration = iteration + 1
-		println(iteration.toString ++ "\t" ++ str)
+		if (verbose) println(iteration.toString ++ "\t" ++ str)
 
 		str match {
 			
@@ -41,7 +41,7 @@ class parser {
 					case "*" => mul_div_res = (left * right).toString
 					case "/" => mul_div_res = (left / right).toString
 				}
-				println("\t=" + mul_div_res)
+				if (verbose) println("\t=" + mul_div_res)
 				res = res.replaceFirstOccurrence(mul_div.toString, mul_div_res)
 				eval(res)
 			}
@@ -56,7 +56,7 @@ class parser {
 					case "+" => add_sub_res = (left + right).toString
 					case "-" => add_sub_res = (left - right).toString
 				}
-				println("\t=" + add_sub_res)
+				if (verbose) println("\t=" + add_sub_res)
 				res = res.replaceFirstOccurrence(add_sub.toString, add_sub_res)
 				eval(res)
 			}
@@ -70,21 +70,17 @@ class parser {
 }
 
 object Main extends App {
-	//println(parser("2*(3*4)*(5*(6*7))"))
-	//println(parser("2*(3*4)*(5*(6*7))*(2*6*7*1*(6*7*(8*(9)*4*2)*1)*1)*7"))
 	val parser = new parser
 	println(parser("1-2-3-4-5-6"))
 	println(parser("1+2*3+4*5"))
 	println(parser("1+2+3+4+5"))
 	println(parser("1000/10/20/5/4"))
 	println(parser("1*2*3*4*5*6"))
-	println()
-	println()
 	println(parser("10*2+(10-8)*5"))
-	//println(parser("1+10*2/2"))
-	//println(parser(""))
-	//println(parser(""))
-	//println(res = parser("1-1"))
-	//println(res = parser("1*1"))
-	//println(res = parser("1/1"))
+	println(parser("1+10*2/2"))
+	println(parser("1-1"))
+	println(parser("1*1"))
+	println(parser("1/1"))
+	println(parser("2*(3*4)*(5*(6*7))"))
+	println(parser("2*(3*4)*(5*(6*7))*(2*6*7*1*(6*7*(8*(9)*4*2)*1)*1)*7"))
 }
