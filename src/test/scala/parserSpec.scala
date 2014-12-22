@@ -11,6 +11,11 @@ import dispatch.Defaults._
 abstract class UnitSpec extends FlatSpec with ShouldMatchers
 
 class parserSpec extends UnitSpec {
+
+
+	val fractional_tolerance = 0.0001
+
+
 	val test_set = Table(
 		("formula", "result"),
 		// reaction to garbage should be to print it out and exit
@@ -44,51 +49,42 @@ class parserSpec extends UnitSpec {
 		("5*(6-7)","-5.0"),
 		("5/(6+7)","0.38461538461"),
 		("5/(6-7)","-5.0"),
-		("3*(6-(20/4))","3.0")
+		("3*(6-(20/4))","3.0"),
+		// Going wild
+		("5*8/83-266+(82-5*6/(3*7-9)/77)*1/8","-255.272130731")
 	)
 
 	val formulae = Array(
-		// "6/(7+14)-9+(8*0)",
-		// "4+6",
-		// "4-6",
-		// "4*6",
-		// "4/6",
-		// "1-2-3-4-5-6",
-		// "1+2*3+4*5",
-		// "1+2+3+4+5",
-		// "1000/10/20/5/4",
-		// "1*2*3*4*5*6",
-		// "10*2+(10-8)*5",
-		// "1+10*2/2",
-		// "1-1",
-		// "1*1",
-		// "1/1",
-		// "2*(3*4)*(5*(6*7))",
+		"6/(7+14)-9+(8*0)",
+		"4+6",
+		"4-6",
+		"4*6",
+		"4/6",
+		"1-2-3-4-5-6"
+		"1+2*3+4*5",
+		"1+2+3+4+5",
+		"1000/10/20/5/4",
+		"1*2*3*4*5*6",
+		"10*2+(10-8)*5",
+		"1+10*2/2",
+		"1-1",
+		"1*1",
+		"1/1",
+		"2*(3*4)*(5*(6*7))",
 		"2*(3*4)*(5*(6*7))*(2*6*7*1*(6*7*(8*(9)*4*2)*1)*1)*7"
 	)
 
+
 	val parse = new parser
 
-	"The parser" should "correctly evaluate manually entered formulae" in {
-		val cp = new Checkpoint
-		forAll[String,String](test_set) { (formula: String, result: String) =>
-			println(formula + " = " + result)
-			try {
-				cp { parse(formula).toDouble / result.toDouble should be (1.0 +- 0.001) }
-			} catch {
-				case e: Exception => println(e.getMessage)
-			}
-		}
-		cp.reportAll
-	}
 
 	// Define matcher to check whether a list of possible results of a calculation contains
 	// one satisfactory result.
-	val containAnElementNearUnity = new Matcher[List[Float]] {
+	val containAtLeastOneElementNearUnity = new Matcher[List[Float]] {
     	def apply(list: List[Float]) = MatchResult(
         	{
         		var res = false
-        		for (e <- list) { if (abs(e - 1.0) < 0.001) { res = true } }
+        		for (e <- list) { if (abs(e - 1.0) < fractional_tolerance) { res = true } }
         		res
         	},
         	list + " did not contain an element close to unity",
@@ -96,18 +92,42 @@ class parserSpec extends UnitSpec {
         )
   	}
 
-  	// To recognise the part of Google's huge query response containing the result of the calculation
-  	val re_formula_simple = ("""[0-9eE\./\-\*\+\(\) ]+ = """ + ParserRegex.float).r
 
-	"The parser" should "agree with the results of the google online calculator" in {
-		for (f <- formulae) {
-			val parsed = parse(f).toFloat
-			val request_url = url("https://www.google.co.uk/search?q=" + f.replace("+", "%2B"))
-			val response = Http(request_url OK as.String)
-			for (r <- response) { // asynchronously executed (e.g. order of execution not preserved)
-				println("\n" + raw_url)
-				re_formula_simple.findAllMatchIn(r).map( m => (m.group(1).toFloat / parsed).toFloat).toList should containAnElementNearUnity
+	"The parser" should "correctly evaluate manually entered formulae" in {
+		val cp = new Checkpoint
+		forAll[String,String](test_set) { (formula: String, result: String) =>
+			println("Testing: " + formula + " = " + result)
+			try {
+				val result_p = parse(formula).toDouble
+				val result_m = result.toDouble
+				if (!(result_p == 0.0 && result_m == 0.0)) {
+					cp { result_p / result_m should be (1.0 +- fractional_tolerance) }
+				}
+			} catch {
+				case e: Exception => println("Non-evaluation related exception:" + e.getMessage)
 			}
 		}
+		cp.reportAll
 	}
+
+
+	"The parser" should "agree with the results of the Google online calculator" in {
+		// To fish out the calculation result from the response body
+		val re_formula_simple = ("""[0-9eE\./\-\*\+\(\) ]+ = ([0-9\-\u00A0]+)""").r
+		val cp = new Checkpoint
+		for (f <- formulae) {
+			println("Testing " + f)
+			val parsed = parse(f).toFloat
+			val request_url = url("https://www.google.co.uk/search?q=" + f.replace("+", "%2B"))
+			val async_response = Http(request_url OK as.String)
+			val response = async_response() // force execution
+			val ratio_list = re_formula_simple.findAllMatchIn(response).map( m => (m.group(1).replace("\u00A0", "").toFloat / parsed) ).toList
+			println(re_formula_simple.findAllMatchIn(response).toList)
+			println("\t" + ratio_list.toString)
+			cp { ratio_list should containAtLeastOneElementNearUnity }
+		}
+		cp.reportAll
+	}
+
+
 }
