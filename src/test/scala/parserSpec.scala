@@ -3,10 +3,10 @@ package arithmeticparser
 import math._
 import org.scalatest._
 import org.scalatest.Checkpoints._
-import Matchers._
+import matchers._
 import org.scalatest.prop.TableDrivenPropertyChecks._
 import dispatch._
-import Defaults._
+import dispatch.Defaults._
 
 abstract class UnitSpec extends FlatSpec with ShouldMatchers
 
@@ -48,22 +48,22 @@ class parserSpec extends UnitSpec {
 	)
 
 	val formulae = Array(
-		"6/(7+14)-9+(8*0)",
-		"4+6",
-		"4-6",
-		"4*6",
-		"4/6",
-		"1-2-3-4-5-6",
-		"1+2*3+4*5",
-		"1+2+3+4+5",
-		"1000/10/20/5/4",
-		"1*2*3*4*5*6",
-		"10*2+(10-8)*5",
-		"1+10*2/2",
-		"1-1",
-		"1*1",
-		"1/1",
-		"2*(3*4)*(5*(6*7))",
+		// "6/(7+14)-9+(8*0)",
+		// "4+6",
+		// "4-6",
+		// "4*6",
+		// "4/6",
+		// "1-2-3-4-5-6",
+		// "1+2*3+4*5",
+		// "1+2+3+4+5",
+		// "1000/10/20/5/4",
+		// "1*2*3*4*5*6",
+		// "10*2+(10-8)*5",
+		// "1+10*2/2",
+		// "1-1",
+		// "1*1",
+		// "1/1",
+		// "2*(3*4)*(5*(6*7))",
 		"2*(3*4)*(5*(6*7))*(2*6*7*1*(6*7*(8*(9)*4*2)*1)*1)*7"
 	)
 
@@ -82,21 +82,32 @@ class parserSpec extends UnitSpec {
 		cp.reportAll
 	}
 
+	// Define matcher to check whether a list of possible results of a calculation contains
+	// one satisfactory result.
+	val containAnElementNearUnity = new Matcher[List[Float]] {
+    	def apply(list: List[Float]) = MatchResult(
+        	{
+        		var res = false
+        		for (e <- list) { if (abs(e - 1.0) < 0.001) { res = true } }
+        		res
+        	},
+        	list + " did not contain an element close to unity",
+        	list + " did contain an element close to unity"
+        )
+  	}
+
+  	// To recognise the part of Google's huge query response containing the result of the calculation
+  	val re_formula_simple = ("""[0-9eE\./\-\*\+\(\) ]+ = """ + ParserRegex.float).r
+
 	"The parser" should "agree with the results of the google online calculator" in {
-		//val re_formula = ("[" + ParserRegex.float + "\*\+\-/\(\)]").r
-		val re_formula_simple = ("""[0-9eE\./\-\*\+\(\) ]+ = """ + ParserRegex.float).r
 		for (f <- formulae) {
-			val f_encoded = f.replace("+", "%2B")
-			val raw_url = "https://www.google.co.uk/search?q=" + f_encoded
-			val request_url = url(raw_url)
+			val parsed = parse(f).toFloat
+			val request_url = url("https://www.google.co.uk/search?q=" + f.replace("+", "%2B"))
 			val response = Http(request_url OK as.String)
-			for (r <- response) {
+			for (r <- response) { // asynchronously executed (e.g. order of execution not preserved)
 				println("\n" + raw_url)
-				for (m <- re_formula_simple.findAllMatchIn(r)) {
-					println("\t" + m.group(1))
-				}
-				println("\t" + parse(f))
-		}
+				re_formula_simple.findAllMatchIn(r).map( m => (m.group(1).toFloat / parsed).toFloat).toList should containAnElementNearUnity
+			}
 		}
 	}
 }
