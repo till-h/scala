@@ -60,7 +60,7 @@ class parserSpec extends UnitSpec {
 		"4-6",
 		"4*6",
 		"4/6",
-		"1-2-3-4-5-6"
+		"1-2-3-4-5-6",
 		"1+2*3+4*5",
 		"1+2+3+4+5",
 		"1000/10/20/5/4",
@@ -104,7 +104,7 @@ class parserSpec extends UnitSpec {
 					cp { result_p / result_m should be (1.0 +- fractional_tolerance) }
 				}
 			} catch {
-				case e: Exception => println("Non-evaluation related exception:" + e.getMessage)
+				case e: Exception => println("Non-evaluation related exception: " + e.getMessage)
 			}
 		}
 		cp.reportAll
@@ -113,7 +113,7 @@ class parserSpec extends UnitSpec {
 
 	"The parser" should "agree with the results of the Google online calculator" in {
 		// To fish out the calculation result from the response body
-		val re_formula_simple = ("""[0-9eE\./\-\*\+\(\) ]+ = ([0-9\-\u00A0]+)""").r
+		val re_formula_simple = ("""[0-9eE\./\-\*\+\(\) ]+ = (-?[0-9.\u00A0]+)""").r
 		val cp = new Checkpoint
 		for (f <- formulae) {
 			println("Testing " + f)
@@ -122,8 +122,9 @@ class parserSpec extends UnitSpec {
 			val async_response = Http(request_url OK as.String)
 			val response = async_response() // force execution
 			val ratio_list = re_formula_simple.findAllMatchIn(response).map( m => (m.group(1).replace("\u00A0", "").toFloat / parsed) ).toList
-			println(re_formula_simple.findAllMatchIn(response).toList)
-			println("\t" + ratio_list.toString)
+			println("\tParsed   : " + parsed)
+			println("\tExtracted: " + re_formula_simple.findAllMatchIn(response).toList)
+			println("\tRatio    : " + ratio_list.toString)
 			cp { ratio_list should containAtLeastOneElementNearUnity }
 		}
 		cp.reportAll
