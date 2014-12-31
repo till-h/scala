@@ -1,4 +1,4 @@
-package arithmeticparser
+package org.tillh.arithmeticparser
 
 import math._
 import org.scalatest._
@@ -71,7 +71,8 @@ class parserSpec extends UnitSpec {
 		"1*1",
 		"1/1",
 		"2*(3*4)*(5*(6*7))",
-		"2*(3*4)*(5*(6*7))*(2*6*7*1*(6*7*(8*(9)*4*2)*1)*1)*7"
+		"2*(3*4)*(5*(6*7))*(2*6*7*1*(6*7*(8*(9)*4*2)*1)*1)*7",
+		"5^6-8*77*7^2"
 	)
 
 
@@ -118,7 +119,7 @@ class parserSpec extends UnitSpec {
 		for (f <- formulae) {
 			println("Testing " + f)
 			val parsed = parse(f).toFloat
-			val request_url = url("https://www.google.co.uk/search?q=" + f.replace("+", "%2B"))
+			val request_url = url("https://www.google.co.uk/search?q=" + f.replace("+", "%2B").replace("^", "%5E"))
 			val async_response = Http(request_url OK as.String)
 			val response = async_response() // force execution
 			val ratio_list = re_formula_simple.findAllMatchIn(response).map( m => (m.group(1).replace("\u00A0", "").toFloat / parsed) ).toList
