@@ -2,7 +2,7 @@ package org.tillh.arithmeticparser
 
 import org.tillh.utils.StringUtils._
 import org.tillh.utils.ParserRegex._
-import Math.pow
+import Math.{pow, exp, log, log10, sin, cos, tan}
 
 class parser (verbose: Boolean = false) {
 
@@ -18,10 +18,49 @@ class parser (verbose: Boolean = false) {
 
 		str match {
 			// match in order of operation priority
+			
+			// match exp et al before simple brackets because the simple brackets regex matches the exp et al ones as well!
+			// (It is a less specific regex than the exp et al regexs.)
 
-			case str if (str.contains("(") || str.contains(")")) => {
-				// use regex to match all atomic (...) occurences and replace these by eval(...) in each case.
-				val res = re_innermost_bracket.replaceAllIn(str, bracket => eval(bracket.toString.replaceAll("[()]", "")))
+			case str if str matchesRegex re_innermost_exp => {
+				// use regex to match all atomic exp(...) occurences and replace these by exp(eval(...)) in each case.				
+				val res = re_innermost_exp.replaceAllIn(str, bracket => exp(eval(bracket.toString.replaceAll("[()]", "").replaceAll("exp", "")).toFloat).toString)
+				eval(res)
+			}
+
+			case str if str matchesRegex re_innermost_ln => {
+				// use regex to match all atomic exp(...) occurences and replace these by exp(eval(...)) in each case.				
+				val res = re_innermost_ln.replaceAllIn(str, bracket => log(eval(bracket.toString.replaceAll("[()]", "").replaceAll("ln", "")).toFloat).toString)
+				eval(res)
+			}
+
+			case str if str matchesRegex re_innermost_log => {
+				// use regex to match all atomic exp(...) occurences and replace these by exp(eval(...)) in each case.				
+				val res = re_innermost_log.replaceAllIn(str, bracket => log10(eval(bracket.toString.replaceAll("[()]", "").replaceAll("log", "")).toFloat).toString)
+				eval(res)
+			}
+
+			case str if str matchesRegex re_innermost_sin => {
+				// use regex to match all atomic exp(...) occurences and replace these by exp(eval(...)) in each case.				
+				val res = re_innermost_sin.replaceAllIn(str, bracket => sin(eval(bracket.toString.replaceAll("[()]", "").replaceAll("sin", "")).toFloat).toString)
+				eval(res)
+			}
+
+			case str if str matchesRegex re_innermost_cos => {
+				// use regex to match all atomic exp(...) occurences and replace these by exp(eval(...)) in each case.				
+				val res = re_innermost_cos.replaceAllIn(str, bracket => cos(eval(bracket.toString.replaceAll("[()]", "").replaceAll("cos", "")).toFloat).toString)
+				eval(res)
+			}
+
+			case str if str matchesRegex re_innermost_tan => {
+				// use regex to match all atomic exp(...) occurences and replace these by exp(eval(...)) in each case.				
+				val res = re_innermost_tan.replaceAllIn(str, bracket => tan(eval(bracket.toString.replaceAll("[()]", "").replaceAll("tan", "")).toFloat).toString)
+				eval(res)
+			}
+
+			case str if str matchesRegex re_innermost_bracket => {
+				// use regex to match all atomic (...) occurences and replace these by eval(...) in each case.				
+				val res = re_innermost_bracket.replaceAllIn(str, bracket => eval(bracket.group(2).toString)) // drop the brackets in groups 1,3 in "bracket"
 				eval(res)
 			}
 			
